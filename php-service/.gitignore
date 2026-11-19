@@ -1,0 +1,3 @@
+# Configuración local con la IP de PC3 (ya está en el .gitignore raíz, se repite por seguridad)
+.env
+vendor/
