@@ -9,8 +9,9 @@ import co.edu.ucaldas.monitores.dto.MonitorUpdateRequest;
 
 /**
  * Lo que el controlador necesita de la capa siguiente.
- * Hoy lo implementa DatosPruebaBackend (datos en memoria); en el siguiente paso lo implementará
- * PhpClient, que reenvía cada operación al servicio PHP. Los controladores no cambian.
+ * La implementa PhpClient, que reenvía cada operación al servicio PHP (PC2).
+ * Los controladores dependen de esta interfaz, no de cómo se habla con PHP.
+ * Los errores (404, 409, 400 de la BD) llegan desde PHP y los propaga GlobalExceptionHandler.
  */
 public interface MonitorBackend {
 
@@ -18,15 +19,11 @@ public interface MonitorBackend {
 
     List<Monitor> listarMonitores();
 
-    /** @throws co.edu.ucaldas.monitores.exception.ApiException 404 si no existe */
     Monitor buscarMonitor(String codigo);
 
-    /** @throws co.edu.ucaldas.monitores.exception.ApiException 409 si el código ya existe */
     Monitor crearMonitor(MonitorRequest datos);
 
-    /** @throws co.edu.ucaldas.monitores.exception.ApiException 404 si no existe */
     Monitor actualizarMonitor(String codigo, MonitorUpdateRequest datos);
 
-    /** @throws co.edu.ucaldas.monitores.exception.ApiException 404 si no existe */
     void eliminarMonitor(String codigo);
 }
