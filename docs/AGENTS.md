@@ -32,6 +32,7 @@ Este archivo es **la fuente común de verdad** del equipo. Si cambia algo que af
 | Fecha | Quién | Cambio |
 |---|---|---|
 | 2026-11-18 | Integrante 1 | Versión inicial: arquitectura, estructura, reglas de git, contrato, validaciones, indicaciones para PHP y Python, versiones, integración y pruebas. |
+| 2026-11-18 | Integrante 2 | Estado actual: la rama `java` ya está integrada en `main`. Decisiones del equipo: el PUT siempre envía los tres campos; plan B con SQLite si MySQL falla en PC3; este archivo se edita solo en `main`. |
 
 ---
 
@@ -55,8 +56,8 @@ Interfaz HTML/JS ──► Controlador Java ──► Servicio PHP ──► Ser
 ## 2. Estado actual (lo que ya está hecho)
 
 - **Repo:** `https://github.com/jAlejandro423/monitores-distribuidos`
-- **`main`** ya tiene la estructura de carpetas, el `.gitignore` raíz y una primera versión del controlador Java.
-- **Controlador Java: terminado.** Expone los 6 endpoints, valida los datos (RF6) y reenvía todo a PHP. Está en la rama `java`, que va un commit adelante de `main`; se integra a `main` pronto.
+- **`main`** tiene la estructura de carpetas, el `.gitignore` raíz, este `AGENTS.md` y el controlador Java completo, incluida la conexión con PHP.
+- **Controlador Java: terminado.** Expone los 6 endpoints, valida los datos (RF6) y reenvía todo a PHP. La rama `java` ya está integrada: hoy `java` y `main` apuntan al mismo commit.
 - Se probó de punta a punta contra un **mock de PHP** que implementa el contrato en memoria. Es decir: **si su servicio cumple el contrato de este documento, debería conectarse con Java sin cambios.**
 - Falta: la interfaz Bootstrap (Integrante 1, viernes en la mañana), el servicio PHP y el servicio Python con la BD.
 
@@ -84,6 +85,7 @@ Las carpetas `php-service/`, `python-service/`, `database/` y `docs/` existen pe
 4. **Commits pequeños, en español, uno por funcionalidad.** Ejemplo: `Agrega endpoint DELETE de monitores`.
 5. **Nunca subir credenciales ni IPs.** La contraseña de MySQL, las IPs y las URLs van en un `.env` o en variables de entorno; `.env` ya está en el `.gitignore`. Si quieren, suban un `.env.example` sin valores reales.
 6. Antes de hacer `push`, revisen con `git status` que no van archivos de `vendor/`, `__pycache__/`, `.venv/` ni del IDE.
+7. **`docs/AGENTS.md` se edita solo en `main`.** Cada integrante lo trae a su rama con `git merge main`. Así no hay versiones distintas del documento en cada rama.
 
 ## 5. Contrato de la API (congelado)
 
@@ -120,6 +122,7 @@ Error (**siempre** esta forma, en todas las capas):
 | DELETE | `/api/monitores/{codigo}` | — | **204, sin cuerpo** | 404 si no existe |
 
 - El `codigo` va en la ruta en GET, PUT y DELETE; en el PUT **no se edita** y no viene en el cuerpo.
+- El PUT **siempre envía los tres campos** (`nombre`, `correo`, `materiaId`). No hay actualizaciones parciales.
 - Si una capa no logra conectarse con la siguiente → **502** con `{"error": "Servicio X no disponible"}`. (Java usa `"Servicio PHP no disponible"`.)
 
 ### Ejemplos de mensajes de error sugeridos
@@ -192,6 +195,7 @@ Puntos clave:
 - **Tildes:** la BD y la conexión en `utf8mb4` ("Ingeniería", "Pérez"). FastAPI ya responde JSON en UTF-8.
 - **Escuchar en todas las interfaces:** `uvicorn main:app --host 0.0.0.0 --port 5000`.
 - **Credenciales de MySQL** en un `.env` (no se sube). Si MySQL está en el mismo PC3, no hace falta abrir su puerto en el firewall: solo el 5000.
+- **Plan B si MySQL falla en PC3: SQLite.** Hay que activar `PRAGMA foreign_keys=ON` en cada conexión (SQLite no revisa las llaves foráneas por defecto) y mapear `sqlite3.IntegrityError` igual que los errores de MySQL: llave primaria duplicada → **409** (equivale al 1062) y materia inexistente por llave foránea → **400** (equivale al 1452). El contrato no cambia.
 
 ## 10. Versiones
 
