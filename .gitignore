@@ -1,0 +1,17 @@
+# Java
+java-controller/target/
+*.class
+*.iml
+# Python
+__pycache__/
+*.pyc
+.venv/
+# PHP
+php-service/vendor/
+# Configuración local (IPs, claves de BD)
+.env
+# IDE y sistema operativo
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
