@@ -40,7 +40,7 @@ function config(): array
     };
 
     $config = [
-        'PYTHON_URL'     => rtrim((string) $leer('PYTHON_URL', ''), '/'),
+        'PYTHON_URL'     => rtrim((string) $leer('PYTHON_URL', 'http://localhost:5000'), '/'),
         'PYTHON_TIMEOUT' => (int) $leer('PYTHON_TIMEOUT', '5'),
     ];
     return $config;

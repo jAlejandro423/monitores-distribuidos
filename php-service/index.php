@@ -6,7 +6,6 @@
  *
  * PHP solo reenvía a Python: mismo método, misma ruta, mismo cuerpo,
  * y devuelve el código de estado y el cuerpo de Python tal cual.
- * El reenvío real con cURL queda pendiente (por ahora las rutas responden 501).
  */
 
 declare(strict_types=1);
@@ -16,6 +15,7 @@ ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
 require __DIR__ . '/src/config.php';
+require __DIR__ . '/src/proxy.php';
 
 $inicio = microtime(true);
 $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -33,6 +33,7 @@ function responderJson(int $estado, $cuerpo = null): void
 {
     http_response_code($estado);
     if ($estado === 204) {
+        header_remove('Content-Type');
         return;
     }
     header('Content-Type: application/json; charset=utf-8');
@@ -62,11 +63,15 @@ foreach ($rutas as [$m, $patron]) {
 }
 
 if ($coincide) {
-    // TODO: reenviar a config()['PYTHON_URL'] . $ruta con cURL (timeout PYTHON_TIMEOUT),
-    // propagar estado y cuerpo, y responder 502 {"error": "Servicio Python no disponible"}
-    // si no hay conexión.
-    $estado = 501;
-    responderJson($estado, ['error' => 'Ruta aún no implementada en el servicio PHP']);
+    $query = $_SERVER['QUERY_STRING'] ?? '';
+    $destino = $ruta . ($query !== '' ? '?' . $query : '');
+    $resp = reenviarAPython($metodo, $destino, (string) file_get_contents('php://input'));
+    if ($resp === null) {
+        $estado = 502;
+        responderJson($estado, ['error' => 'Servicio Python no disponible']);
+    } else {
+        $estado = responderDesdePython($resp);
+    }
 } elseif ($rutaExiste) {
     $estado = 405;
     responderJson($estado, ['error' => "Método $metodo no permitido en $ruta"]);
