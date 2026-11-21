@@ -1,7 +1,7 @@
 """
 Servicio de datos (PC3) - Gestión de Monitores Académicos.
 
-FastAPI + SQLite (plan B del taller). Expone las 6 rutas del contrato de
+FastAPI + MySQL (opción preferida) o SQLite (plan B). Expone las 6 rutas del contrato de
 docs/AGENTS.md (sección 5) y responde siempre en la forma {"error": "..."}.
 
 Arranque:
@@ -12,9 +12,10 @@ o bien:
 
 import logging
 import os
-import sqlite3
 import time
 from typing import List, Optional
+
+from db import DB_ENGINE, IntegrityError, es_duplicado, es_foreign_key, get_db_connection
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
@@ -72,47 +73,70 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Base de datos (SQLite, plan B)
 # ---------------------------------------------------------------------------
-def get_db_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_FILE, timeout=10)
-    conn.row_factory = sqlite3.Row
-    # SQLite no revisa FK por defecto: hay que activarlo en cada conexión.
-    conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
-
-
 def init_db() -> None:
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS materia (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL UNIQUE
-            );
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS monitor (
-                codigo TEXT PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                correo TEXT NOT NULL,
-                materia_id INTEGER NOT NULL,
-                FOREIGN KEY (materia_id) REFERENCES materia(id)
-            );
-            """
-        )
-        cur.execute("SELECT COUNT(*) FROM materia;")
-        if cur.fetchone()[0] == 0:
-            cur.executemany(
-                "INSERT INTO materia (nombre) VALUES (?);",
-                [
-                    ("Algoritmos",),
-                    ("Redes I",),
-                    ("Ingeniería de Software III",),
-                ],
+        if DB_ENGINE == "mysql":
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS materia (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    nombre VARCHAR(100) NOT NULL UNIQUE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS monitor (
+                    codigo VARCHAR(20) PRIMARY KEY,
+                    nombre VARCHAR(120) NOT NULL,
+                    correo VARCHAR(120) NOT NULL,
+                    materia_id INT NOT NULL,
+                    FOREIGN KEY (materia_id) REFERENCES materia(id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """
+            )
+            cur.execute("SELECT COUNT(*) AS c FROM materia;")
+            if cur.fetchone()["c"] == 0:
+                cur.executemany(
+                    "INSERT IGNORE INTO materia (nombre) VALUES (?);",
+                    [
+                        ("Algoritmos",),
+                        ("Redes I",),
+                        ("Ingeniería de Software III",),
+                    ],
+                )
+        else:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS materia (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL UNIQUE
+                );
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS monitor (
+                    codigo TEXT PRIMARY KEY,
+                    nombre TEXT NOT NULL,
+                    correo TEXT NOT NULL,
+                    materia_id INTEGER NOT NULL,
+                    FOREIGN KEY (materia_id) REFERENCES materia(id)
+                );
+                """
+            )
+            cur.execute("SELECT COUNT(*) AS c FROM materia;")
+            if cur.fetchone()["c"] == 0:
+                cur.executemany(
+                    "INSERT INTO materia (nombre) VALUES (?);",
+                    [
+                        ("Algoritmos",),
+                        ("Redes I",),
+                        ("Ingeniería de Software III",),
+                    ],
+                )
         conn.commit()
     finally:
         conn.close()
@@ -121,7 +145,7 @@ def init_db() -> None:
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
-    logger.info("Base de datos SQLite lista en %s", DB_FILE)
+    logger.info("Base de datos lista (motor: %s, archivo/BD: %s)", DB_ENGINE, DB_FILE)
 
 
 # ---------------------------------------------------------------------------
@@ -313,15 +337,14 @@ def crear_monitor(data: MonitorCreate):
             "materiaId": data.materiaId,
             "materiaNombre": materia["nombre"],
         }
-    except sqlite3.IntegrityError as exc:
+    except IntegrityError as exc:
         # Respaldo por si la BD detecta la violación antes que nosotros.
-        mensaje = str(exc).lower()
-        if "unique" in mensaje or "primary key" in mensaje:
+        if es_duplicado(exc):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail={"error": f"Ya existe un monitor con código {data.codigo}"},
             )
-        if "foreign key" in mensaje:
+        if es_foreign_key(exc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"error": f"La materia {data.materiaId} no existe"},
@@ -368,9 +391,8 @@ def actualizar_monitor(codigo: str, data: MonitorUpdate):
             "materiaId": data.materiaId,
             "materiaNombre": materia["nombre"],
         }
-    except sqlite3.IntegrityError as exc:
-        mensaje = str(exc).lower()
-        if "foreign key" in mensaje:
+    except IntegrityError as exc:
+        if es_foreign_key(exc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"error": f"La materia {data.materiaId} no existe"},
