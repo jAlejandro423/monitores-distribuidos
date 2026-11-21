@@ -34,6 +34,7 @@ Este archivo es **la fuente común de verdad** del equipo. Si cambia algo que af
 | 2026-11-18 | Integrante 1 | Versión inicial: arquitectura, estructura, reglas de git, contrato, validaciones, indicaciones para PHP y Python, versiones, integración y pruebas. |
 | 2026-11-18 | Integrante 2 | Estado actual: la rama `java` ya está integrada en `main`. Decisiones del equipo: el PUT siempre envía los tres campos; plan B con SQLite si MySQL falla en PC3; este archivo se edita solo en `main`. |
 | 2026-11-20 | Integrante 1 | Estado actual: las ramas `php` y `python` ya están integradas en `main` (servicio PHP, servicio Python y `database/schema.sql`). Las tres capas cumplen el contrato; falta la interfaz y la integración en red. |
+| 2026-11-20 | Integrante 1 | Estado actual: la interfaz Bootstrap ya está en `main` (rama `java`). Lo que falta es la integración en red y decidir entre MySQL y SQLite. |
 
 ---
 
@@ -57,13 +58,13 @@ Interfaz HTML/JS ──► Controlador Java ──► Servicio PHP ──► Ser
 ## 2. Estado actual (lo que ya está hecho)
 
 - **Repo:** `https://github.com/jAlejandro423/monitores-distribuidos`
-- **`main`** tiene la estructura de carpetas, el `.gitignore` raíz, este `AGENTS.md` y las tres capas de backend. Las ramas `java`, `php` y `python` ya están integradas.
+- **`main`** tiene la estructura de carpetas, el `.gitignore` raíz, este `AGENTS.md` , la interfaz y las tres capas de backend. Las ramas `java`, `php` y `python` ya están integradas.
+- **Interfaz Bootstrap: terminada.** Está en `java-controller/src/main/resources/static/` y se abre en `http://<IP-PC1>:8080/`. Cubre los 6 RF (registro, listado, búsqueda por código, edición en modal, eliminación con confirmación) y muestra en un aviso el `error` que devuelva el backend, con su código (400, 404, 409, 502). Solo llama a `/api/...` de Java. Probada contra el mock de PHP.
 - **Controlador Java: terminado.** Expone los 6 endpoints, valida los datos (RF6) y reenvía todo a PHP.
 - **Servicio PHP: terminado.** Reenvía las 6 rutas a Python con cURL (`PYTHON_URL`, tiempo de espera de 5 s). Ver `php-service/README.md`.
 - **Servicio Python: terminado.** FastAPI con las 6 rutas, errores siempre como `{"error": ...}` (400 en vez de 422). Hoy usa SQLite (plan B); el esquema para MySQL está en `database/schema.sql`. Ver `python-service/README.md`.
 - Se probó Java → Python de punta a punta en PC1 (todo el CRUD, 400, 404 y 409). **Falta probar la cadena completa con PHP en medio**, que es la integración en red.
 - Falta:
-  - la interfaz Bootstrap (Integrante 1);
   - la integración en red de los 3 PC (cada uno abre su puerto en el firewall y comparte su IP);
   - decidir si el taller exige MySQL o si basta con SQLite (Integrante 3).
 
