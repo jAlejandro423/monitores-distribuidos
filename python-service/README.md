@@ -6,10 +6,16 @@ expone las 6 rutas del contrato (`docs/AGENTS.md`, sección 5).
 ## Base de datos
 
 La arquitectura del taller prefiere **MySQL 8.0** (ver `database/schema.sql`).
-Este servicio usa **SQLite por defecto** como plan B, para poder ejecutarse sin
-instalar un servidor de BD. Si se dispone de MySQL en PC3, se puede migrar la
-capa de conexión (con `mysql-connector-python` o similar) manteniendo el mismo
-contrato; el esquema está en `database/schema.sql`.
+Este servicio soporta **MySQL y SQLite** mediante la variable de entorno `DB_ENGINE`:
+
+- `DB_ENGINE=mysql` (opción preferida): usa `mysql-connector-python`. Credenciales
+  y host se leen de `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y
+  `MYSQL_DATABASE`.
+- `DB_ENGINE=sqlite` (plan B, por defecto): archivo local `gestion_monitores.db`.
+  Se usa si no hay servidor MySQL disponible.
+
+Los errores se mapean al contrato en ambos motores: duplicado → 409, materia
+inexistente → 400.
 
 ## Requisitos
 
@@ -34,11 +40,18 @@ Variables de entorno (opcionales):
 
 | Variable | Por defecto | Uso |
 |---|---|---|
-| `DB_FILE` | `python-service/gestion_monitores.db` | Ruta del archivo SQLite. |
+| `DB_ENGINE` | `sqlite` | Motor: `mysql` o `sqlite`. |
+| `DB_FILE` | `python-service/gestion_monitores.db` | Ruta del archivo SQLite (si `DB_ENGINE=sqlite`). |
+| `MYSQL_HOST` | `127.0.0.1` | Host de MySQL (si `DB_ENGINE=mysql`). |
+| `MYSQL_PORT` | `3306` | Puerto de MySQL. |
+| `MYSQL_USER` | `root` | Usuario de MySQL. |
+| `MYSQL_PASSWORD` | *(vacío)* | Contraseña de MySQL. |
+| `MYSQL_DATABASE` | `monitores` | Base de datos MySQL. |
 | `HOST` | `0.0.0.0` | Interfaz de escucha. |
 | `PORT` | `5000` | Puerto de escucha. |
 
-También se puede crear un `.env` (no se sube al repositorio) y cargarlo antes de arrancar.
+También se puede crear un `.env` (no se sube al repositorio); el servicio lo carga
+automáticamente al arrancar si existe.
 
 ## Ejecución
 
