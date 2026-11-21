@@ -10,6 +10,9 @@ __pycache__/
 php-service/vendor/
 # Configuración local (IPs, claves de BD)
 .env
+
+# Bases de datos SQLite generadas (PC3, plan B)
+*.db
 # IDE y sistema operativo
 .idea/
 .vscode/
