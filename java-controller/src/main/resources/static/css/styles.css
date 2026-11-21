@@ -1,0 +1,21 @@
+body {
+  background-color: #f5f7fa;
+}
+
+#tabla-monitores .acciones {
+  white-space: nowrap;
+}
+
+.codigo {
+  font-family: var(--bs-font-monospace);
+  font-weight: 600;
+}
+
+/* Resalta la fila del monitor encontrado con el buscador */
+#tabla-monitores tr.resaltado > td {
+  background-color: var(--bs-warning-bg-subtle);
+}
+
+.toast-container {
+  z-index: 1090;
+}
