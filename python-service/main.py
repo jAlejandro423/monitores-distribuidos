@@ -32,6 +32,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("monitores-python")
 
+# Carga opcional de .env (sin dependencias externas), como en el servicio PHP.
+def _cargar_env(ruta: str) -> None:
+    if not os.path.isfile(ruta):
+        return
+    with open(ruta, encoding="utf-8") as f:
+        for linea in f:
+            linea = linea.strip()
+            if not linea or linea.startswith("#") or "=" not in linea:
+                continue
+            clave, valor = linea.split("=", 1)
+            clave = clave.strip()
+            valor = valor.strip().strip("\"'")
+            if clave and clave not in os.environ:
+                os.environ[clave] = valor
+
+
+_cargar_env(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
 DB_FILE = os.getenv(
     "DB_FILE",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "gestion_monitores.db"),

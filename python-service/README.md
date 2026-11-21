@@ -38,7 +38,8 @@ Variables de entorno (opcionales):
 | `HOST` | `0.0.0.0` | Interfaz de escucha. |
 | `PORT` | `5000` | Puerto de escucha. |
 
-También se puede crear un `.env` (no se sube al repositorio) y cargarlo antes de arrancar.
+También se puede crear un `.env` (no se sube al repositorio); el servicio lo carga
+automáticamente al arrancar si existe.
 
 ## Ejecución
 

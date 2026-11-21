@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS monitor (
     FOREIGN KEY (materia_id) REFERENCES materia(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Datos semilla
-INSERT INTO materia (nombre) VALUES
+-- Datos semilla (INSERT IGNORE para poder ejecutar el script varias veces)
+INSERT IGNORE INTO materia (nombre) VALUES
     ('Algoritmos'),
     ('Redes I'),
     ('Ingeniería de Software III');
