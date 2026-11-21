@@ -3,6 +3,14 @@
 Capa de datos del sistema de monitores: persiste en SQLite (plan B del taller) y
 expone las 6 rutas del contrato (`docs/AGENTS.md`, sección 5).
 
+## Base de datos
+
+La arquitectura del taller prefiere **MySQL 8.0** (ver `database/schema.sql`).
+Este servicio usa **SQLite por defecto** como plan B, para poder ejecutarse sin
+instalar un servidor de BD. Si se dispone de MySQL en PC3, se puede migrar la
+capa de conexión (con `mysql-connector-python` o similar) manteniendo el mismo
+contrato; el esquema está en `database/schema.sql`.
+
 ## Requisitos
 
 - Python **3.10 o superior** (probado con 3.13).
