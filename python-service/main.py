@@ -15,8 +15,6 @@ import os
 import time
 from typing import List, Optional
 
-from db import DB_ENGINE, IntegrityError, es_duplicado, es_foreign_key, get_db_connection
-
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,6 +48,10 @@ def _cargar_env(ruta: str) -> None:
 
 
 _cargar_env(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
+# Se importa DESPUÉS de cargar el .env: db.py lee DB_ENGINE al importarse,
+# así que si se importara antes, un DB_ENGINE=mysql del .env se ignoraría.
+from db import DB_ENGINE, IntegrityError, es_duplicado, es_foreign_key, get_db_connection  # noqa: E402
 
 DB_FILE = os.getenv(
     "DB_FILE",
@@ -145,7 +147,15 @@ def init_db() -> None:
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
-    logger.info("Base de datos lista (motor: %s, archivo/BD: %s)", DB_ENGINE, DB_FILE)
+    if DB_ENGINE == "mysql":
+        destino = "{}:{}/{}".format(
+            os.getenv("MYSQL_HOST", "127.0.0.1"),
+            os.getenv("MYSQL_PORT", "3306"),
+            os.getenv("MYSQL_DATABASE", "monitores"),
+        )
+    else:
+        destino = DB_FILE
+    logger.info("Base de datos lista (motor: %s, %s)", DB_ENGINE, destino)
 
 
 # ---------------------------------------------------------------------------
