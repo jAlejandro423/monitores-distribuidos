@@ -58,7 +58,7 @@ Interfaz HTML/JS ──► Controlador Java ──► Servicio PHP ──► Ser
 ## 2. Estado actual (lo que ya está hecho)
 
 - **Repo:** `https://github.com/jAlejandro423/monitores-distribuidos`
-- **`main`** tiene la estructura de carpetas, el `.gitignore` raíz, este `AGENTS.md` , la interfaz y las tres capas de backend. Las ramas `java`, `php` y `python` ya están integradas.
+- **`main`** tiene la estructura de carpetas, el `.gitignore` raíz, este `AGENTS.md`, la interfaz y las tres capas de backend. Las ramas `java`, `php` y `python` ya están integradas.
 - **Interfaz Bootstrap: terminada.** Está en `java-controller/src/main/resources/static/` y se abre en `http://<IP-PC1>:8080/`. Cubre los 6 RF (registro, listado, búsqueda por código, edición en modal, eliminación con confirmación) y muestra en un aviso el `error` que devuelva el backend, con su código (400, 404, 409, 502). Solo llama a `/api/...` de Java. Probada contra el mock de PHP.
 - **Controlador Java: terminado.** Expone los 6 endpoints, valida los datos (RF6) y reenvía todo a PHP.
 - **Servicio PHP: terminado.** Reenvía las 6 rutas a Python con cURL (`PYTHON_URL`, tiempo de espera de 5 s). Ver `php-service/README.md`.
